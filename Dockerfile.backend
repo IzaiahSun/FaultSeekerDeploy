@@ -1,0 +1,38 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies (curl needed for Foundry installer)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    curl \
+    bash \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Foundry (provides the `cast` binary used by txn_replayer)
+RUN curl -L https://foundry.paradigm.xyz | bash
+RUN /root/.foundry/bin/foundryup
+ENV PATH="/root/.foundry/bin:${PATH}"
+
+# Install faultseeker core dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install backend dependencies
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
+# Copy application source
+COPY faultseeker/ ./faultseeker/
+COPY setup.py ./
+RUN pip install --no-cache-dir -e .
+
+COPY backend/ ./backend/
+
+# Foundry config: provides named RPC endpoints used by `cast run`
+COPY foundry.toml ./foundry.toml
+
+EXPOSE 8000
+
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
