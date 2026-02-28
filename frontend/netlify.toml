@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Set your backend URL here, or configure it in Netlify UI → Site settings → Environment variables
+  # VITE_API_BASE = "https://your-backend-domain.com"
+
+# SPA fallback: route all requests to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
